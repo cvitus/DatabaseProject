@@ -1,5 +1,13 @@
-CREATE DATABASE VetClinic;
+#CREATE DATABASE VetClinic;
 USE VetClinic;
+
+DROP TABLE IF EXISTS Billing;
+DROP TABLE IF EXISTS Visit;
+DROP TABLE IF EXISTS Treatment;
+DROP TABLE IF EXISTS Vet;
+DROP TABLE IF EXISTS Animal;
+DROP TABLE IF EXISTS PetOwner;
+
 
 CREATE TABLE PetOwner(
    ownerID INT NOT NULL, 
@@ -16,54 +24,61 @@ CREATE TABLE PetOwner(
    
 CREATE TABLE Animal(
 	animalID INT NOT NULL,
-    ownerID INT NOT NULL,
+    ownerID INT,
     animalName VARCHAR(40),
     animalBirthday DATE,
     animalType VARCHAR(20) NOT NULL,
     animalBreed VARCHAR(20),
     activePatient BOOLEAN,
-    FOREIGN KEY(ownerID) REFERENCES PetOwner(ownerID) ON DELETE SET NULL ON UPDATE CASCADE,
+    FOREIGN KEY (ownerID) REFERENCES PetOwner(ownerID) ON DELETE SET NULL ON UPDATE CASCADE,
     PRIMARY KEY (animalID)
 );
 
 CREATE TABLE Vet(
-vetID INT NOT NULL,
-firstName VARCHAR(20),
-lastName VARCHAR(20),
-salary DECIMAL(8,2),
-phone VARCHAR(20),
-PRIMARY KEY (vetID)
-);
-
-CREATE TABLE Visit(
-visitID INT NOT NULL,
-treatment VARCHAR(20),
-animalID INT NOT NULL,
-visitDate DATETIME,
-reason TEXT,
-checkIn TIME,
-vetID INT NOT NULL,
-FOREIGN KEY(animalID) REFERENCES Animal(animalID) ON DELETE CASCADE ON UPDATE CASCADE,
-FOREIGN KEY(vetID) REFERENCES Vet(vetID) ON DELETE CASCADE ON UPDATE CASCADE,
-PRIMARY KEY (visitID, treatment)
+	vetID INT NOT NULL,
+	firstName VARCHAR(20),
+	lastName VARCHAR(20),
+	salary DECIMAL(8,2),
+	phone VARCHAR(20),
+	PRIMARY KEY (vetID)
 );
 
 CREATE TABLE Treatment(
-treatmentID INT NOT NULL,
-animalType VARCHAR(20) NOT NULL,
-treatmentType VARCHAR(40) NOT NULL,
-cost DECIMAL(8,2),
-PRIMARY KEY (treatmentID)
+	treatmentID INT NOT NULL,
+	animalType VARCHAR(20) NOT NULL,
+	treatmentType VARCHAR(40) NOT NULL,
+	cost DECIMAL(8,2),
+	PRIMARY KEY (treatmentID)
+);
+
+CREATE TABLE Visit(
+	visitID INT NOT NULL,
+	treatmentID INT,
+	animalID INT,
+	visitDate DATETIME,
+	reason VARCHAR(100), #Changed the type from TEXT to VARCHAR(100) in order to have it accepted as a PRIMARY KEY
+	checkIn TIME,
+	vetID INT,
+	FOREIGN KEY (animalID) REFERENCES Animal(animalID) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (vetID) REFERENCES Vet(vetID) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (treatmentID) REFERENCES Treatment(treatmentID) ON DELETE CASCADE ON UPDATE CASCADE, #We need to clarify the ON DELETE constraint
+	PRIMARY KEY (visitID, TreatmentID, reason) #I added "reason" because regarding the entries of that table, it only works by considering the reason as a primary key
+    /* THE FOLLOWING COMMENT IS JUST INFORMATIVE, NOT A BETTER WAY TO DO IT
+    (However it can be interesting to argue on our choice and the reasons of it: easier to understand and to track data modification/limit discrepancy)
+    We can limit the amount of data by deleting visitID if we assume that a vet cannot have 2 visit at the same time and same date (should we just put date-time in the same attribute?)
+    for the same animal and the same treatment, then we would get PRIMARY KEY (vetID, visitDate, checkIn, treatmentID, animalID)
+    but it would change the Billing table though
+    */
 );
 
 CREATE TABLE Billing (
-invoiceNumber INT NOT NULL,
-visitID INT NOT NULL,
-totalCost DECIMAL(8,2),
-dateFilled DATE,
-datePaid DATE,
-FOREIGN KEY (visitID) REFERENCES Visit(visitID) ON DELETE CASCADE ON UPDATE CASCADE,
-PRIMARY KEY (invoiceNumber)
+	invoiceNumber INT NOT NULL,
+	visitID INT NOT NULL,
+	totalCost DECIMAL(8,2),
+	dateFilled DATE,
+	datePaid DATE,
+	FOREIGN KEY (visitID) REFERENCES Visit(visitID) ON DELETE CASCADE ON UPDATE CASCADE,
+	PRIMARY KEY (invoiceNumber)
 );
 
 INSERT Treatment VALUES
@@ -93,9 +108,9 @@ INSERT Animal VALUES
 (4, 1010, 'Minnie', '2018-10-18', 'Mouse', NULL, 0);
 
 INSERT Visit VALUES
-(75, 'Checkup', 1, '2020-04-28 09:30:00', 'Yearly Checkup', NULL, 12345),
-(88, 'Vaccine', 3, '2020-03-01 13:45:00', 'Rabies Shot', '13:32:09', 13579),
-(88, 'Vaccine', 3, '2020-03-01 13:45:00', 'Feline Distemper', '13:32:09', 13579);
+(75, '22', 1, '2020-04-28 09:30:00', 'Yearly Checkup', NULL, 12345),
+(88, '11', 3, '2020-03-01 13:45:00', 'Rabies Shot', '13:32:09', 13579),
+(88, '11', 3, '2020-03-01 13:45:00', 'Feline Distemper', '13:32:09', 13579);
 
 INSERT Billing VALUES
 (101, 88, 100, '2020-03-08', '2020-03-10');
