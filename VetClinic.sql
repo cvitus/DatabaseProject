@@ -99,3 +99,8 @@ INSERT Visit VALUES
 
 INSERT Billing VALUES
 (101, 88, 100, '2020-03-08', '2020-03-10');
+
+#Select all bills that are unpaid
+SELECT OwnerID, AnimalID, VisitID, TotalCost
+FROM (Billing NATURAL JOIN Visit) NATURAL JOIN Animal
+WHERE DatePaid IS NULL;
