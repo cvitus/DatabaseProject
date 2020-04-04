@@ -289,6 +289,20 @@ SET ActivePatient = IsActivePatient(AnimalID, vDate);
 END //
 DELIMITER ;
 
+#Procedure to automatically set the cost of a bill
+DROP PROCEDURE IF EXISTS TotalVisitCost;
+
+DELIMITER //
+CREATE PROCEDURE TotalVisitCost (IN invisitID INT)
+BEGIN
+    UPDATE Billing
+        SET totalCost =
+            (SELECT SUM(cost) FROM Treatment
+            NATURAL JOIN Given
+            GROUP BY visitID) WHERE VisitID = invisitID;
+END //
+DELIMITER ;
+
 CREATE EVENT patient_status_event
 ON SCHEDULE EVERY 1 MONTH
 STARTS '2020-05-01 00:00:01'
